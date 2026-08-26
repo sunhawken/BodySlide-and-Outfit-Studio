@@ -1,4 +1,12 @@
 #include <wx/setup.h>
+// wxWidgets 3.3's standalone setup validation can select no web-view backend
+// when this translation unit includes setup.h before the normal platform
+// headers. BS/OS doesn't use wxWebView, so keep the validation focused on the
+// features it actually requires.
+#if defined(__MINGW32__) && wxUSE_WEBVIEW
+#undef wxUSE_WEBVIEW
+#define wxUSE_WEBVIEW 0
+#endif
 #include <wx/chkconf.h>
 
 #if !defined(wxUSE_GUI) || !wxUSE_GUI
@@ -33,7 +41,7 @@
 #error "BodySlide and Outfit Studio require wxStackWalker support."
 #endif
 
-#if !defined(wxUSE_ON_FATAL_EXCEPTION) || !wxUSE_ON_FATAL_EXCEPTION
+#if (!defined(wxUSE_ON_FATAL_EXCEPTION) || !wxUSE_ON_FATAL_EXCEPTION) && !defined(__MINGW32__)
 #error "BodySlide and Outfit Studio require wxHandleFatalExceptions support."
 #endif
 

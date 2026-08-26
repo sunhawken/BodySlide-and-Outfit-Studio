@@ -64,7 +64,7 @@ bool FileExists(const std::string& fileName) {
 // Provide std::wstring function for Windows
 #ifdef _WINDOWS
 void OpenFileStream(std::fstream& file, const std::wstring& fileName, unsigned int mode) {
-	file.open(fileName.c_str(), mode);
+	file.open(fileName.c_str(), static_cast<std::ios_base::openmode>(mode));
 }
 
 bool FileExists(const std::wstring& fileName) {

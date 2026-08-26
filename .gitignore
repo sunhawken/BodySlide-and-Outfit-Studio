@@ -22,3 +22,9 @@
 *.vs
 
 /build
+/build-*/
+/vendor/
+/dist/engine-dynamic-backup/
+/dist/engine/*
+!/dist/engine/BodySlideCLI-engine.exe
+/tests/cli-fixture/

@@ -140,6 +140,8 @@ bool BodySlideApp::OnInit() {
 #else
 	std::string dataDir{wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath().ToUTF8()};
 #endif
+	if (!cmdAppDir.empty())
+		dataDir = cmdAppDir;
 
 	Config.LoadConfig(dataDir + "/Config.xml");
 	BodySlideConfig.LoadConfig(dataDir + "/BodySlide.xml", "BodySlideConfig");
@@ -149,7 +151,7 @@ bool BodySlideApp::OnInit() {
 	logger.Initialize(Config.GetIntValue("LogLevel", 2), dataDir + "/Log_BS.txt");
 	wxLogMessage("Initializing BodySlide...");
 
-#ifdef NDEBUG
+#if defined(NDEBUG) && wxUSE_ON_FATAL_EXCEPTION && !defined(__MINGW32__)
 	wxHandleFatalExceptions();
 #endif
 
@@ -243,7 +245,8 @@ bool BodySlideApp::OnInit() {
 		PopOutPreview();
 	}
 
-	sliderView->Show();
+	if (!HasCmdLineBuild())
+		sliderView->Show();
 	SetTopWindow(sliderView);
 
 	if (!GetOutputDataPath().empty()) {
@@ -285,6 +288,13 @@ void BodySlideApp::OnInitCmdLine(wxCmdLineParser& parser) {
 }
 
 bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
+	wxString appDir;
+	if (parser.Found("appdir", &appDir)) {
+		wxFileName appDirPath = wxFileName::DirName(appDir);
+		appDirPath.MakeAbsolute();
+		cmdAppDir = appDirPath.GetFullPath().ToUTF8().data();
+	}
+
 	wxString gbuild;
 	parser.Found("gbuild", &gbuild);
 
@@ -428,9 +438,11 @@ void BodySlideApp::OnFatalException() {
 
 	wxMessageBox(_("Fatal exception has occurred, the program will terminate."), _("Fatal exception"), wxICON_ERROR);
 
+#if wxUSE_ON_FATAL_EXCEPTION && !defined(__MINGW32__)
 	wxDebugReport report;
 	report.AddExceptionContext();
 	report.Process();
+#endif
 }
 
 
@@ -4437,8 +4449,11 @@ int BodySlideApp::BuildListBodies(
 
 	refNormalsCache.clear();
 
-	wxProgressDialog progWnd(_("Processing Outfits"), _("Starting..."), 1000, sliderView, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
-	progWnd.SetSize(400, 150);
+	std::unique_ptr<wxProgressDialog> progWnd;
+	if (!HasCmdLineBuild()) {
+		progWnd = std::make_unique<wxProgressDialog>(_("Processing Outfits"), _("Starting..."), 1000, sliderView, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
+		progWnd->SetSize(400, 150);
+	}
 	float progstep = 1000.0f / outfitList.size();
 	std::atomic<int> count = 0;
 	std::unordered_map<std::string, std::string> failedOutfitsCon;
@@ -4475,8 +4490,10 @@ int BodySlideApp::BuildListBodies(
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), wxString::FromUTF8(outfit), processedCount, (int)outfitList.size());
 		{
 			std::lock_guard<std::mutex> lock(batchBuildMutex);
-			progWnd.Update((int)(processedCount * progstep) - 1, progMsg);
-			progWnd.Fit();
+			if (progWnd) {
+				progWnd->Update((int)(processedCount * progstep) - 1, progMsg);
+				progWnd->Fit();
+			}
 			wxLogMessage(progMsg);
 		}
 
@@ -4942,7 +4959,8 @@ int BodySlideApp::BuildListBodies(
 			buildOutfit(outfit);
 	}
 
-	progWnd.Update(1000);
+	if (progWnd)
+		progWnd->Update(1000);
 
 	failedOutfits.insert(failedOutfitsCon.begin(), failedOutfitsCon.end());
 
@@ -5103,10 +5121,9 @@ void BodySlideApp::CommandLineBuild() {
 			errlist.Add(ename + ":" + e.second);
 		}
 
-		wxSingleChoiceDialog errdisplay(sliderView, _("The following sets failed"), _("Failed"), errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
-		errdisplay.ShowModal();
 	}
 
+	cmdExitCode = ret;
 	sliderView->Close(true);
 }
 

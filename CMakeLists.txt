@@ -423,7 +423,7 @@ set(BSOS_BODYSLIDE_SOURCES
 	src/ui/wxNormalsGenDlg.cpp
 )
 
-if(WIN32)
+if(MSVC)
 	list(APPEND BSOS_OUTFIT_STUDIO_SOURCES OutfitStudio.rc)
 	list(APPEND BSOS_BODYSLIDE_SOURCES BodySlide.rc)
 endif()
@@ -433,6 +433,7 @@ add_executable(BodySlide ${BSOS_BODYSLIDE_SOURCES})
 
 set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/OpenGL-Headers
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include

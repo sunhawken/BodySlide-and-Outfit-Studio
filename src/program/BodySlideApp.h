@@ -94,6 +94,7 @@ class BodySlideApp : public wxApp {
 	std::string cmdBuildFilter;				  // Outfits to build, given as an outfit filter expression.
 	bool cmdBuildFilterRegex = false;		  // The filter is a regular expression instead of a substring.
 	std::string cmdTargetDir;
+	std::string cmdAppDir;
 	std::string cmdPreset;
 	std::string cmdPresetFile;
 	bool cmdPresetResolved = false;
@@ -101,8 +102,10 @@ class BodySlideApp : public wxApp {
 	bool cmdTri = false;
 	std::vector<std::string> cmdPreviewNifs;
 	bool cmdPreviewMode = false;
+	int cmdExitCode = 0;
 
 public:
+	int OnExit() override { return cmdExitCode; }
 	/* Clipping Fix */
 	float clippingFixStrength = 0.0f; // 0-100 scale, 0 disables clipping fix
 private:
@@ -392,6 +395,7 @@ public:
 };
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING},
+											   {wxCMD_LINE_OPTION, "appdir", "appdir", "BodySlide data directory", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_OPTION,
 													"b",
 													"build",

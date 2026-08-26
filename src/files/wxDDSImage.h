@@ -9,7 +9,7 @@ See the included LICENSE file
 #include "wx/image.h"
 
 
-class WXDLLIMPEXP_CORE wxDDSHandler : public wxImageHandler {
+class wxDDSHandler : public wxImageHandler {
 public:
 	inline wxDDSHandler() {
 		m_name = wxT("DDS file");
